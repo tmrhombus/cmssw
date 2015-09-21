@@ -6,6 +6,7 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -26,25 +27,29 @@ class ModifyObjectValueBase {
   virtual void setEventContent(const edm::EventSetup&) {}
   virtual void setConsumes(edm::ConsumesCollector&) {}
   
-  virtual void modifyObject(pat::Electron&) const { 
+  virtual void modifyObject(pat::Electron&)     const { 
     throw cms::Exception("InvalidConfiguration") 
       << name_ << " is not configured to handle electrons!"; 
   }
-  virtual void modifyObject(pat::Photon&)   const { 
+  virtual void modifyObject(pat::Photon&)       const { 
     throw cms::Exception("InvalidConfiguration") 
       << name_ << " is not configured to handle photons!"; 
   }
-  virtual void modifyObject(pat::Muon&)     const { 
+  virtual void modifyObject(pat::Muon&)         const { 
     throw cms::Exception("InvalidConfiguration") 
       << name_ << " is not configured to handle muons!"; 
   }
-  virtual void modifyObject(pat::Tau&)      const { 
+  virtual void modifyObject(pat::Tau&)          const { 
     throw cms::Exception("InvalidConfiguration") 
       << name_ << " is not configured to handle taus!"; 
   }
-  virtual void modifyObject(pat::Jet&)      const { 
+  virtual void modifyObject(pat::Jet&)          const { 
     throw cms::Exception("InvalidConfiguration") 
       << name_ << " is not configured to handle jets!"; 
+  }
+  virtual void modifyObject(reco::CaloCluster&) const {
+    throw cms::Exception("InvalidConfiguration") 
+      << name_ << " is not configured to handle calo clusters!"; 
   }
 
   const std::string& name() const { return name_; }
