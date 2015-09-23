@@ -6,6 +6,7 @@
 
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 
 #include "CondFormats/DataRecord/interface/GBRDWrapperRcd.h"
 #include "CondFormats/EgammaObjects/interface/GBRForestD.h"
@@ -56,6 +57,20 @@ public:
     std::vector<std::string> condnames_sigma_25ns;
   };
 
+  struct cluster_config {   // tp
+    edm::InputTag cluster_src;
+    edm::EDGetTokenT<edm::View<reco::CaloCluster> > tok_cluster_src;
+    std::unordered_map<std::string, ValMapFloatTagTokenPair> tag_float_token_map;
+    std::unordered_map<std::string, ValMapIntTagTokenPair> tag_int_token_map;
+
+    std::vector<std::string> condnames_mean_50ns;
+    std::vector<std::string> condnames_sigma_50ns;
+    std::vector<std::string> condnames_mean_25ns;
+    std::vector<std::string> condnames_sigma_25ns;
+    std::string condnames_weight_50ns;
+    std::string condnames_weight_25ns;
+  };
+
   EGExtraInfoModifierFromDB(const edm::ParameterSet& conf);
   ~EGExtraInfoModifierFromDB() {};
     
@@ -65,16 +80,22 @@ public:
   
   void modifyObject(pat::Electron&) const override final;
   void modifyObject(pat::Photon&) const override final;
+  //void modifyObject(reco::CaloCluster&) const override final; // tp
 
 private:
   electron_config e_conf;
   photon_config   ph_conf;
+  cluster_config  c_conf;
+
   std::unordered_map<unsigned,edm::Ptr<reco::GsfElectron> > eles_by_oop; // indexed by original object ptr
   std::unordered_map<unsigned,edm::Handle<edm::ValueMap<float> > > ele_vmaps;
   std::unordered_map<unsigned,edm::Handle<edm::ValueMap<int> > > ele_int_vmaps;
   std::unordered_map<unsigned,edm::Ptr<reco::Photon> > phos_by_oop;
   std::unordered_map<unsigned,edm::Handle<edm::ValueMap<float> > > pho_vmaps;
   std::unordered_map<unsigned,edm::Handle<edm::ValueMap<int> > > pho_int_vmaps;
+  std::unordered_map<unsigned,edm::Ptr<reco::CaloCluster> > clus_by_oop;  // tp
+  std::unordered_map<unsigned,edm::Handle<edm::ValueMap<float> > > clus_vmaps;
+  std::unordered_map<unsigned,edm::Handle<edm::ValueMap<int> > > clus_int_vmaps;
 
   bool autoDetectBunchSpacing_;
   int bunchspacing_;
@@ -88,11 +109,14 @@ private:
   edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
   edm::Handle<reco::VertexCollection> vtxH_;
 
-  std::vector<const GBRForestD*> ph_forestH_mean_;
-  std::vector<const GBRForestD*> ph_forestH_sigma_; 
   std::vector<const GBRForestD*> e_forestH_mean_;
   std::vector<const GBRForestD*> e_forestH_sigma_; 
+  std::vector<const GBRForestD*> ph_forestH_mean_;
+  std::vector<const GBRForestD*> ph_forestH_sigma_; 
+  std::vector<const GBRForestD*> c_forestH_mean_;
+  std::vector<const GBRForestD*> c_forestH_sigma_; 
   const GBRForest* ep_forestH_weight_;
+  const GBRForest* c_forestH_weight_;
 };
 
 DEFINE_EDM_PLUGIN(ModifyObjectValueFactory,
@@ -116,6 +140,7 @@ EGExtraInfoModifierFromDB::EGExtraInfoModifierFromDB(const edm::ParameterSet& co
 
   constexpr char electronSrc[] =  "electronSrc";
   constexpr char photonSrc[] =  "photonSrc";
+  constexpr char clusterSrc[] =  "clusterSrc";  // tp
 
   if(conf.exists("electron_config")) {
     const edm::ParameterSet& electrons = conf.getParameter<edm::ParameterSet>("electron_config");
@@ -179,6 +204,37 @@ EGExtraInfoModifierFromDB::EGExtraInfoModifierFromDB(const edm::ParameterSet& co
     ph_conf.condnames_mean_25ns = photons.getParameter<std::vector<std::string>>("regressionKey_25ns");
     ph_conf.condnames_sigma_25ns = photons.getParameter<std::vector<std::string>>("uncertaintyKey_25ns");
   }
+
+  if(conf.exists("cluster_config")) {       // tp
+    const edm::ParameterSet& clusters = conf.getParameter<edm::ParameterSet>("cluster_config");
+    if( clusters.exists(clusterSrc) ) 
+      c_conf.cluster_src = clusters.getParameter<edm::InputTag>(clusterSrc);
+    
+    std::vector<std::string> intValueMaps;
+    if ( clusters.existsAs<std::vector<std::string> >("intValueMaps")) 
+      intValueMaps = clusters.getParameter<std::vector<std::string> >("intValueMaps");
+
+    const std::vector<std::string> parameters = clusters.getParameterNames();
+    for( const std::string& name : parameters ) {
+      if( std::string(clusterSrc) == name ) 
+        continue;
+      if( clusters.existsAs<edm::InputTag>(name)) {
+        for (auto vmp : intValueMaps) {
+          if (name == vmp) {
+            c_conf.tag_int_token_map[name] = ValMapIntTagTokenPair(clusters.getParameter<edm::InputTag>(name), ValMapIntToken());
+            break;
+          } 
+        }
+        c_conf.tag_float_token_map[name] = ValMapFloatTagTokenPair(clusters.getParameter<edm::InputTag>(name), ValMapFloatToken());
+      }
+    }
+    
+    c_conf.condnames_mean_50ns  = clusters.getParameter<std::vector<std::string> >("regressionKey_50ns");
+    c_conf.condnames_sigma_50ns = clusters.getParameter<std::vector<std::string> >("uncertaintyKey_50ns");
+    c_conf.condnames_mean_25ns  = clusters.getParameter<std::vector<std::string> >("regressionKey_25ns");
+    c_conf.condnames_sigma_25ns = clusters.getParameter<std::vector<std::string> >("uncertaintyKey_25ns");
+  }
+  
 }
 
 template<typename T>
@@ -190,11 +246,14 @@ inline void get_product(const edm::Event& evt,
 
 void EGExtraInfoModifierFromDB::setEvent(const edm::Event& evt) {
   eles_by_oop.clear();
-  phos_by_oop.clear();  
   ele_vmaps.clear();
   ele_int_vmaps.clear();
+  phos_by_oop.clear();  
   pho_vmaps.clear();
   pho_int_vmaps.clear();
+  clus_by_oop.clear();    // tp
+  clus_vmaps.clear();     
+  clus_int_vmaps.clear(); 
   
   if( !e_conf.tok_electron_src.isUninitialized() ) {
     edm::Handle<edm::View<pat::Electron> > eles;
@@ -227,8 +286,29 @@ void EGExtraInfoModifierFromDB::setEvent(const edm::Event& evt) {
       phos_by_oop[ptr->originalObjectRef().key()] = ptr;
     }
   }
-   
 
+  //if( !c_conf.tok_cluster_src.isUninitialized() ) {   // tp
+  //  edm::Handle<edm::View<reco::CaloCluster> > clusrs;
+  //  evt.getByToken(c_conf.tok_cluster_src, clusrs);
+  //  
+  //  for( unsigned i = 0; i < clusrs->size(); ++i ) {
+  //    edm::Ptr<reco::CaloCluster> ptr = clusrs->ptrAt(i);
+  //    clus_by_oop[ptr->originalObjectRef().key()] = ptr;  // get ref 
+  //  }    
+  //}
+
+  //for (std::unordered_map<std::string, ValMapFloatTagTokenPair>::iterator imap = c_conf.tag_float_token_map.begin(); 
+  //     imap != c_conf.tag_float_token_map.end(); 
+  //     imap++) {
+  //  get_product(evt, imap->second.second, clus_vmaps);
+  //}
+
+  //for (std::unordered_map<std::string, ValMapIntTagTokenPair>::iterator imap = c_conf.tag_int_token_map.begin(); 
+  //     imap != c_conf.tag_int_token_map.end(); 
+  //     imap++) {
+  //  get_product(evt, imap->second.second, clus_int_vmaps);
+  //}   //
+  
   for (std::unordered_map<std::string, ValMapFloatTagTokenPair>::iterator imap = ph_conf.tag_float_token_map.begin(); 
        imap != ph_conf.tag_float_token_map.end(); 
        imap++) {
@@ -279,6 +359,17 @@ void EGExtraInfoModifierFromDB::setEventContent(const edm::EventSetup& evs) {
 
   edm::ESHandle<GBRForestD> forestDEH;
   edm::ESHandle<GBRForest> forestEH;
+
+  //const std::vector<std::string> c_condnames_mean  = (bunchspacing_ == 25) ? c_conf.condnames_mean_25ns  : c_conf.condnames_mean_50ns;
+  //const std::vector<std::string> c_condnames_sigma = (bunchspacing_ == 25) ? c_conf.condnames_sigma_25ns : c_conf.condnames_sigma_50ns;
+
+  //unsigned int ncor = c_condnames_mean.size();
+  //for (unsigned int icor=0; icor<ncor; ++icor) {
+  //  evs.get<GBRDWrapperRcd>().get(c_condnames_mean[icor], forestDEH);
+  //  c_forestH_mean_.push_back(forestDEH.product());
+  //  evs.get<GBRDWrapperRcd>().get(c_condnames_sigma[icor], forestDEH);
+  //  c_forestH_sigma_.push_back(forestDEH.product());
+  //} 
 
   const std::vector<std::string> ph_condnames_mean  = (bunchspacing_ == 25) ? ph_conf.condnames_mean_25ns  : ph_conf.condnames_mean_50ns;
   const std::vector<std::string> ph_condnames_sigma = (bunchspacing_ == 25) ? ph_conf.condnames_sigma_25ns : ph_conf.condnames_sigma_50ns;
@@ -358,6 +449,22 @@ void EGExtraInfoModifierFromDB::setConsumes(edm::ConsumesCollector& sumes) {
 	imap++) {
     make_int_consumes(imap->second.first, imap->second.second, sumes);
   }  
+
+  // // setup clusters       tp
+  // if(!(empty_tag == c_conf.photon_src)) 
+  //   c_conf.tok_photon_src = sumes.consumes<edm::View<reco::CaloCluster> >(c_conf.photon_src);
+
+  // for ( std::unordered_map<std::string, ValMapFloatTagTokenPair>::iterator imap = c_conf.tag_float_token_map.begin(); 
+  //       imap != c_conf.tag_float_token_map.end(); 
+  //       imap++) {
+  //   make_consumes(imap->second.first, imap->second.second, sumes);
+  // }  
+
+  // for ( std::unordered_map<std::string, ValMapIntTagTokenPair>::iterator imap = c_conf.tag_int_token_map.begin(); 
+  //       imap != c_conf.tag_int_token_map.end(); 
+  //       imap++) {
+  //   make_int_consumes(imap->second.first, imap->second.second, sumes);
+  // }  
 }
 
 template<typename T, typename U, typename V, typename Z>
@@ -657,3 +764,81 @@ void EGExtraInfoModifierFromDB::modifyObject(pat::Photon& pho) const {
   double sigmacor = sigma*ecor;
   pho.setCorrectedEnergy(reco::Photon::P4type::regression2, ecor, sigmacor, true);     
 }
+
+
+//void EGExtraInfoModifierFromDB::modifyObject(reco::CaloCluster& clu) const {
+//  // we encounter two cases here, either we are running AOD -> MINIAOD
+//  // and the value maps are to the reducedEG object, can use original object ptr
+//  // or we are running MINIAOD->MINIAOD and we need to fetch the pat objects to reference
+//  edm::Ptr<reco::Candidate> ptr(clu.originalObjectRef());
+//
+//  if(!c_conf.tok_cluster_src.isUninitialized()) {
+//    auto key = clus_by_oop.find(clu.originalObjectRef().key());
+//    if( key != clus_by_oop.end() ) {
+//      ptr = key->second;
+//    } else {
+//      throw cms::Exception("BadClusterKey")
+//        << "Original object pointer with key = " << clu.originalObjectRef().key() << " not found in cache!";
+//    }
+//  }
+//  
+//  std::array<float, 31> eval;
+//  edm::Ptr<reco::CaloCluster> theseed = clu->seed();
+//  
+//  // SET INPUTS
+//     varsf->push_back("rho");
+//  varsf->push_back("scEta");
+//  varsf->push_back("scPhiWidth");
+//  varsf->push_back("scSeedR9");
+//  varsf->push_back("N_ECALClusters");
+//  varsf->push_back("clusterMaxDR");
+//  varsf->push_back("scRawEnergy");
+//
+//  eval[0]  = clu->rawEnergy();
+//  eval[1]  = clu->position().Eta();
+//  eval[3]  = clu->phiWidth(); 
+//  eval[4]  = clu.r9();
+//  const int N_ECAL = sc->clustersEnd() - sc->clustersBegin();
+//  eval[5]  = std::max(0,N_ECAL - 1);
+//  float maxDR = 0;
+//  if(reco::deltaR(clu, theseed) > maxDR)
+//  {   
+//      maxDR = reco::deltaR(clu, theseed);
+//      _clusterMaxDR = maxDR;
+//  }
+//  ecal[6]  = maxDR;
+//  eval[7]  = rhoValue_;
+//
+//  //magic numbers for MINUIT-like transformation of BDT output onto limited range
+//  //(These should be stored inside the conditions object in the future as well)
+//  const double meanlimlow  = 0.2;
+//  const double meanlimhigh = 2.0;
+//  const double meanoffset  = meanlimlow + 0.5*(meanlimhigh-meanlimlow);
+//  const double meanscale   = 0.5*(meanlimhigh-meanlimlow);
+//  
+//  const double sigmalimlow  = 0.0002;
+//  const double sigmalimhigh = 0.5;
+//  const double sigmaoffset  = sigmalimlow + 0.5*(sigmalimhigh-sigmalimlow);
+//  const double sigmascale   = 0.5*(sigmalimhigh-sigmalimlow);  
+// 
+//  bool iseb = clu.isEB();
+//  int coridx = 0;
+//  if (!iseb)
+//    coridx = 1;
+//
+//  //these are the actual BDT responses
+//  double rawmean = c_forestH_mean_[coridx]->GetResponse(eval.data());
+//  double rawsigma = c_forestH_sigma_[coridx]->GetResponse(eval.data());
+//  //apply transformation to limited output range (matching the training)
+//  double mean = meanoffset + meanscale*vdt::fast_sin(rawmean);
+//  double sigma = sigmaoffset + sigmascale*vdt::fast_sin(rawsigma);
+//
+//  //regression target is ln(Etrue/Eraw)
+//  //so corrected energy is ecor=exp(mean)*e, uncertainty is exp(mean)*eraw*sigma=ecor*sigma
+//  double ecor = mean*eval[0];
+//  if (!iseb) 
+//    ecor = mean*(eval[0]+sc->preshowerEnergy());
+//
+//  double sigmacor = sigma*ecor;
+//  pho.setCorrectedEnergy(reco::Photon::P4type::regression2, ecor, sigmacor, true);     
+//}
