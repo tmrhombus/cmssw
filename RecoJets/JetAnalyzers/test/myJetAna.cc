@@ -110,10 +110,10 @@ typedef struct HPD_struct {
 
 
 
-float totBNC, nBNC[4000];
+float totBNC, nBNC[4000];     ///tmp
 
-RBX RBXColl[36];
-HPD HPDColl[144];
+RBX RBXColl[36];     ///tmp
+HPD HPDColl[144];     ///tmp
 
 // ************************
 // ************************
@@ -638,7 +638,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   float minJetPt = 20.;
   float minJetPt10 = 10.;
   int jetInd, allJetInd;
-  LeadMass = -1;
+  LeadMass = -1;     ///tmp
 
   //  Handle<DcsStatusCollection> dcsStatus;
   //  evt.getByLabel("scalersRawToDigi", dcsStatus);
@@ -663,19 +663,6 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 	    << " Orbit Number = "   << evt.orbitNumber()
 	    << " Luminosity Block = "  << evt.luminosityBlock()
 	    <<  std::endl;
-  ***/
-
-  // *********************
-  // *** Filter Event
-  // *********************
-  Pass = false;
-
-  /***
-  if (evt.bunchCrossing()== 100) {
-    Pass = true;
-  } else {
-    Pass = false;
-  }
   ***/
 
   // ***********************
@@ -740,60 +727,6 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   const TechnicalTriggerWord tWord = gtRecord->technicalTriggerWord();
 
   ***/
-
-
-  // *************************
-  // ***  Pass Bunch Crossing
-  // *************************
-
-  // *** Check Luminosity Section
-  if (evt.id().run() == 122294)
-    if ( (evt.luminosityBlock() >= 37) && (evt.luminosityBlock() <= 43) ) 
-      Pass = true;
-  if (evt.id().run() == 122314)
-    if ( (evt.luminosityBlock() >= 24) && (evt.luminosityBlock() <= 37) ) 
-      Pass = true;
-  if (evt.id().run() == 123575)
-      Pass = true;
-  if (evt.id().run() == 123596)
-      Pass = true;
-
-  // ***********
-  if (evt.id().run() == 124009) {
-    if ( (evt.bunchCrossing() == 51) ||
-	 (evt.bunchCrossing() == 151) ||
-	 (evt.bunchCrossing() == 2824) ) {
-      Pass = true;
-    }
-  }
-
-  if (evt.id().run() == 124020) {
-    if ( (evt.bunchCrossing() == 51) ||
-	 (evt.bunchCrossing() == 151) ||
-	 (evt.bunchCrossing() == 2824) ) {
-      Pass = true;
-    }
-  }
-
-  if (evt.id().run() == 124024) {
-    if ( (evt.bunchCrossing() == 51) ||
-	 (evt.bunchCrossing() == 151) ||
-	 (evt.bunchCrossing() == 2824) ) {
-      Pass = true;
-    }
-  }
-
-  if ( (evt.bunchCrossing() == 51)   ||
-       (evt.bunchCrossing() == 151)  ||
-       (evt.bunchCrossing() == 2596) || 
-       (evt.bunchCrossing() == 2724) || 
-       (evt.bunchCrossing() == 2824) ||
-       (evt.bunchCrossing() == 3487) ) {
-    Pass_BunchCrossing = true;
-  } else {
-    Pass_BunchCrossing = false;
-  }
-  
 
   // ***********************
   // ***  Pass HF Timing 
@@ -903,7 +836,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
       }
       break;
     }
-  } catch (...) {
+  } catch (...) {     ///tmp
     cout << "No HF RecHits." << endl;
   }
 
@@ -971,10 +904,10 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   nJet      = 0;
   nDiJet    = 0;
-  highestPt = 0.0;
-  nextPt    = 0.0;
+  highestPt = 0.0;     ///tmp
+  nextPt    = 0.0;     ///tmp
 
-  allJetInd = 0;
+  allJetInd = 0;     ///tmp
   Handle<CaloJetCollection> caloJets;
   evt.getByLabel( CaloJetAlgorithm, caloJets );
   for( CaloJetCollection::const_iterator cal = caloJets->begin(); cal != caloJets->end(); ++ cal ) {
@@ -1055,30 +988,6 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   auto const &  tC = *(trackCollection.product());
 
 
-  // **************************
-  // *** Event Passed Selection
-  // **************************
-
-
-  if (evt.id().run() == 1) {
-    if ( (Pass_DiJet)         &&
-	 (Pass_Vertex) ) {
-      Pass = true;
-    } else {
-      Pass = false;
-    }
-    Pass = true;
-
-  } else {
-    if ( (Pass_BunchCrossing) && 
-	 (Pass_HFTime)        &&
-	 (Pass_Vertex) ) {
-      Pass = true;
-    } else {
-      Pass = false;
-    }
-  }
-
   /***
   std::cout << "+++ Result " 
 	    << " Event = " 
@@ -1093,18 +1002,6 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   ***/
 
   NTotal->Fill(0);
-  
-  Pass = false;
-  if ((tC.size() > 100) && (clustColl.size() > 1000)) Pass = true;
-  Pass = true;
-
-  /****
-  if (Pass_HFTime) {
-    Pass = true;
-  } else {
-    Pass = false;
-  }
-  ****/
 
   // **************************
   // *** Noise Summary Object
@@ -1147,13 +1044,6 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   }
   if(summary.minRBXEMF()<0.01) {
   }
-
-  if (Pass_NoiseSummary) {
-    Pass = false;
-  } else {
-    Pass = true;
-  }
-
 
   Pass = true;
   if (Pass) {
@@ -2585,7 +2475,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   // *** Vertex
   // ********************************
   VTX  = INVALID;
-  nVTX = 0;
+  nVTX = 0;     ///tmp
 
   edm::Handle<reco::VertexCollection> vertexCollection;
   evt.getByLabel("offlinePrimaryVertices", vertexCollection);
