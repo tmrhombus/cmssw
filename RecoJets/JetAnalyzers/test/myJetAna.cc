@@ -109,11 +109,9 @@ typedef struct HPD_struct {
 } HPD ;
 
 
+static std::atomic_int totBNC
+float nBNC[4000];
 
-float totBNC, nBNC[4000];
-
-RBX RBXColl[36];
-HPD HPDColl[144];
 
 // ************************
 // ************************
@@ -1167,6 +1165,9 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   Handle<CaloTowerCollection> caloTowers;
   evt.getByLabel( "towerMaker", caloTowers );
+
+  RBX RBXColl[36];
+  HPD HPDColl[144];
 
   for (int i=0;i<36;i++) {
     RBXColl[i].et        = 0;
@@ -2798,9 +2799,9 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 void myJetAna::endJob() {
 
   for (int i=0; i<4000; i++) {
-    if ((nBNC[i]/totBNC) > 0.05) {
+    if (((float)nBNC[i]/(float)totBNC) > 0.05) {
       std::cout << "+++ " << i << " " 
-		<< (nBNC[i]/totBNC) << " "
+		<< ((float)nBNC[i]/(float)totBNC) << " "
 		<< nBNC[i]          << " " 
 		<< totBNC           << " " 
 		<< std::endl;      
