@@ -638,7 +638,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   float minJetPt = 20.;
   float minJetPt10 = 10.;
   int jetInd, allJetInd;
-  LeadMass = -1;
+  //LeadMass = -1;
 
   //  Handle<DcsStatusCollection> dcsStatus;
   //  evt.getByLabel("scalersRawToDigi", dcsStatus);
@@ -903,8 +903,8 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
       }
       break;
     }
-  } catch (...) {      ///tomp
-    cout << "No HF RecHits." << endl;
+  } catch (cms::Exception& e) {      ///tomp
+    cout << " Product not found: 8006, No HF RecHits." << endl;
   }
 
   cout << "N HF Hits" << NHFLongShortHits << " " << NHFDigiTimeHits << endl;
@@ -971,10 +971,10 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   nJet      = 0;
   nDiJet    = 0;
-  highestPt = 0.0;
-  nextPt    = 0.0;
+  //highestPt = 0.0;
+  //nextPt    = 0.0;
 
-  allJetInd = 0;
+  //allJetInd = 0;
   Handle<CaloJetCollection> caloJets;
   evt.getByLabel( CaloJetAlgorithm, caloJets );
   for( CaloJetCollection::const_iterator cal = caloJets->begin(); cal != caloJets->end(); ++ cal ) {
@@ -2585,7 +2585,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   // *** Vertex
   // ********************************
   VTX  = INVALID;
-  nVTX = 0;
+  //nVTX = 0;
 
   edm::Handle<reco::VertexCollection> vertexCollection;
   evt.getByLabel("offlinePrimaryVertices", vertexCollection);
