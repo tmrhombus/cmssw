@@ -65,12 +65,9 @@
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
 
 // #include "DataFormats/Scalers/interface/DcsStatus.h"
-
 // include files
 #include "DataFormats/METReco/interface/HcalNoiseSummary.h"
-
 #include "DataFormats/METReco/interface/HcalCaloFlagLabels.h"  
-
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "JetMETCorrections/Objects/interface/JetCorrector.h"
@@ -79,6 +76,9 @@
 #include <TFile.h>
 #include <TCanvas.h>
 #include <cmath>
+
+#include <mutex>
+std::mutex mtx;
 
 using namespace edm;
 using namespace reco;
@@ -1025,8 +1025,9 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   // ***********************
   // ***********************
 
-
+  mtx.lock();
   nBNC[evt.bunchCrossing()]++;
+  mtx.unlock();
   totBNC++;
     
   //  Pass = true;
