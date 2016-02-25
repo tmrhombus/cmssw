@@ -418,9 +418,10 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
       }
       break;
     }
-  } catch (...) {
-    cout << "No HF RecHits." << endl;
+  } catch (cms::Exception& e) {
+    cout << " Product not found: 8006, No HF RecHits." << endl;
   }
+
 
   if (MaxRecHitEne > 1000.) filter_HFHighEnergy = true;
 
@@ -481,7 +482,7 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
   }
 
   _nTotal++;
-  Pass = true;
+  //Pass = true;
   if (Pass) {
     /***
   std::cout << ">>>> FIL: Run = "    << evt.id().run()
