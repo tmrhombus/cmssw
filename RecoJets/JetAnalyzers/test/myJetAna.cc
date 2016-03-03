@@ -77,13 +77,9 @@
 #include <TCanvas.h>
 #include <cmath>
 
-#include <mutex>
-std::mutex mtx;
-
 using namespace edm;
 using namespace reco;
 using namespace std;
-
 
 #define INVALID 9999.
 #define DEBUG false
@@ -107,10 +103,6 @@ typedef struct HPD_struct {
   float  ecalTime;
   int    nTowers;
 } HPD ;
-
-
-static std::atomic_int totBNC
-float nBNC[4000];
 
 
 // ************************
@@ -585,7 +577,6 @@ void myJetAna::beginJob( ) {
   HFDigiTimeTime = fs->make<TH1F>( "HFDigiTimeTime", "HFDigiTimeTime", 120, -60, 60 );
   HFDigiTimeNHits = fs->make<TH1F>( "HFDigiTimeNHits", "HFDigiTimeNHits", 30, 0, 30 );
 
-
   totBNC = 0;
   for (int i=0; i<4000; i++)  nBNC[i] = 0;
 
@@ -824,85 +815,81 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   //  edm::Handle<reco::VertexCollection> vertexCollection;
 
-  try {
-    std::vector<edm::Handle<HFRecHitCollection> > colls;
-    evt.getManyByType(colls);
+  std::vector<edm::Handle<HFRecHitCollection> > colls;
+  evt.getManyByType(colls);
 
-    std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      
-      for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-        if (j->id().subdet() == HcalForward) {
+  std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    
+    for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      if (j->id().subdet() == HcalForward) {
 
-	  HFRecHitEne->Fill(j->energy());
-	  if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 0) && 
-	       (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 0) ) {
-	    HFRecHitEneClean->Fill(j->energy());
-	  }
- 
-	  HFRecHitTime->Fill(j->time());
-
-          int myFlag;
-          myFlag= j->flagField(HcalCaloFlagLabels::HFLongShort);
-          if (myFlag==1) {
-	    NHFLongShortHits++;
-	    HFLongShortPhi->Fill(j->id().iphi());
-	    HFLongShortEta->Fill(j->id().ieta());
-	    HFLongShortEne->Fill(j->energy());
-	    HFLongShortTime->Fill(j->time());
-	  }
-
-          myFlag= j->flagField(HcalCaloFlagLabels::HFDigiTime);
-          if (myFlag==1) {
-	    NHFDigiTimeHits++;
-	    HFDigiTimePhi->Fill(j->id().iphi());
-	    HFDigiTimeEta->Fill(j->id().ieta());
-	    HFDigiTimeEne->Fill(j->energy());
-	    HFDigiTimeTime->Fill(j->time());
-	  }
-
-	  
-	  float en = j->energy();
-	  float time = j->time();
-	  if ((en > 20.) && (time>20.)) {
-	    HFoccTime->Fill(j->id().ieta(),j->id().iphi());
-	    nTime++;
-	  }
-	  HcalDetId id(j->detid().rawId());
-	  int ieta = id.ieta();
-	  int iphi = id.iphi();
-	  int depth = id.depth();
-
-
-	  // Long:  depth = 1
-	  // Short: depth = 2
-	  HFRecHit[ieta+41][iphi][depth-1] = en;
-	  HFRecHitFlag[ieta+41][iphi][depth-1] = j->flagField(0);
-
-	  /****
-	  std::cout << "RecHit Flag = " 
-		    << j->flagField(0)a
-		    << std::endl;
-	  ***/
-
-	  if (j->id().ieta()<0) {
-	    if (j->energy() > HFThreshold) {
-	      HFM_ETime += j->energy()*j->time(); 
-	      HFM_E     += j->energy();
-	    }
-	  } else {
-	    if (j->energy() > HFThreshold) {
-	      HFP_ETime += j->energy()*j->time(); 
-	      HFP_E     += j->energy();
-	    }
-	  }
-
+        HFRecHitEne->Fill(j->energy());
+        if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 0) && 
+             (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 0) ) {
+          HFRecHitEneClean->Fill(j->energy());
         }
+ 
+        HFRecHitTime->Fill(j->time());
+
+        int myFlag;
+        myFlag= j->flagField(HcalCaloFlagLabels::HFLongShort);
+        if (myFlag==1) {
+          NHFLongShortHits++;
+          HFLongShortPhi->Fill(j->id().iphi());
+          HFLongShortEta->Fill(j->id().ieta());
+          HFLongShortEne->Fill(j->energy());
+          HFLongShortTime->Fill(j->time());
+        }
+
+        myFlag= j->flagField(HcalCaloFlagLabels::HFDigiTime);
+        if (myFlag==1) {
+          NHFDigiTimeHits++;
+          HFDigiTimePhi->Fill(j->id().iphi());
+          HFDigiTimeEta->Fill(j->id().ieta());
+          HFDigiTimeEne->Fill(j->energy());
+          HFDigiTimeTime->Fill(j->time());
+        }
+
+        
+        float en = j->energy();
+        float time = j->time();
+        if ((en > 20.) && (time>20.)) {
+          HFoccTime->Fill(j->id().ieta(),j->id().iphi());
+          nTime++;
+        }
+        HcalDetId id(j->detid().rawId());
+        int ieta = id.ieta();
+        int iphi = id.iphi();
+        int depth = id.depth();
+
+
+        // Long:  depth = 1
+        // Short: depth = 2
+        HFRecHit[ieta+41][iphi][depth-1] = en;
+        HFRecHitFlag[ieta+41][iphi][depth-1] = j->flagField(0);
+
+        /****
+        std::cout << "RecHit Flag = " 
+      	    << j->flagField(0)a
+      	    << std::endl;
+        ***/
+
+        if (j->id().ieta()<0) {
+          if (j->energy() > HFThreshold) {
+            HFM_ETime += j->energy()*j->time(); 
+            HFM_E     += j->energy();
+          }
+        } else {
+          if (j->energy() > HFThreshold) {
+            HFP_ETime += j->energy()*j->time(); 
+            HFP_E     += j->energy();
+          }
+        }
+
       }
-      break;
     }
-  } catch (cms::Exception& e) {      ///tomp
-    cout << " Product not found: 8006, No HF RecHits." << endl;
+    break;
   }
 
   cout << "N HF Hits" << NHFLongShortHits << " " << NHFDigiTimeHits << endl;
@@ -1025,9 +1012,7 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   // ***********************
   // ***********************
 
-  mtx.lock();
   nBNC[evt.bunchCrossing()]++;
-  mtx.unlock();
   totBNC++;
     
   //  Pass = true;
@@ -1658,159 +1643,154 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   // HCALTotalE = 0.;
   HBTotalE = HETotalE = HOTotalE = HFTotalE = 0.;
-  try {
-    std::vector<edm::Handle<HBHERecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HBHERecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
+  std::vector<edm::Handle<HBHERecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HBHERecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
 
 
-      for (HBHERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-        //      std::cout << *j << std::endl;
-        if (j->id().subdet() == HcalBarrel) {
-	  HBEne->Fill(j->energy()); 
-	  HBTime->Fill(j->time()); 
-	  if (!Pass_NoiseSummary) HBTimeFlagged2->Fill(j->time()); 
-	  if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeFlagged->Fill(j->time()); 
-	  HBTvsE->Fill(j->energy(), j->time());
+    for (HBHERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //      std::cout << *j << std::endl;
+      if (j->id().subdet() == HcalBarrel) {
+        HBEne->Fill(j->energy()); 
+        HBTime->Fill(j->time()); 
+        if (!Pass_NoiseSummary) HBTimeFlagged2->Fill(j->time()); 
+        if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeFlagged->Fill(j->time()); 
+        HBTvsE->Fill(j->energy(), j->time());
 
-	  if (j->time() > 20.) HBEneTThr->Fill(j->energy()); 
-	  
-	  if ((j->time()<-25.) || (j->time()>75.)) {
-	    HBEneOOT->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold)  HBEneOOTTh->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold1) HBEneOOTTh1->Fill(j->energy()); 
-	  }
-	  if (j->energy() > HBHEThreshold) {
-	    HBEneTh->Fill(j->energy()); 
-	    HBTimeTh->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HBTimeThFlagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeThFlagged->Fill(j->time()); 
-
-	    if (evt.id().run() >= StableRun) HBTimeThR->Fill(j->time()); 
-	    HBTotalE += j->energy();
-	    HBocc->Fill(j->id().ieta(),j->id().iphi());
-	    hitEta->Fill(j->id().ieta());
-	    hitPhi->Fill(j->id().iphi());
-	  }
-	  if (j->energy() > HBHEThreshold1) {
-	    HBEneTh1->Fill(j->energy()); 
-	    HBTimeTh1->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HBTimeTh1Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeTh1Flagged->Fill(j->time()); 
-
-	    if (evt.id().run() >= StableRun) HBTimeTh1R->Fill(j->time()); 
-	    if ((j->time()<-25.) || (j->time()>75.)) {
-	      HBoccOOT->Fill(j->id().ieta(),j->id().iphi());
-	    }
-	  }
-	  if (j->energy() > HBHEThreshold2) {
-	    HBTimeTh2->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HBTimeTh2Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeTh2Flagged->Fill(j->time()); 
-
-	    if (evt.id().run() >= StableRun) HBTimeTh2R->Fill(j->time()); 
-	  }
-	  if (j->energy() > HBHEThreshold3) {
-	    HBTimeTh3->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HBTimeTh3R->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
-	    HBEneX->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) HBTimeX->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
-	    HBEneY->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) HBTimeY->Fill(j->time()); 
-	  }
+        if (j->time() > 20.) HBEneTThr->Fill(j->energy()); 
+        
+        if ((j->time()<-25.) || (j->time()>75.)) {
+          HBEneOOT->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold)  HBEneOOTTh->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold1) HBEneOOTTh1->Fill(j->energy()); 
         }
-        if (j->id().subdet() == HcalEndcap) {
-	  HEEne->Fill(j->energy()); 
-	  HETime->Fill(j->time()); 
-	  if (!Pass_NoiseSummary) HETimeFlagged2->Fill(j->time()); 
-	  if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeFlagged->Fill(j->time()); 
-	  HETvsE->Fill(j->energy(), j->time());
+        if (j->energy() > HBHEThreshold) {
+          HBEneTh->Fill(j->energy()); 
+          HBTimeTh->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HBTimeThFlagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeThFlagged->Fill(j->time()); 
 
-	  if (j->time() > 20.) HEEneTThr->Fill(j->energy()); 
-
-	  if ((j->time()<-25.) || (j->time()>75.)) {
-	    HEEneOOT->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold)  HEEneOOTTh->Fill(j->energy());  
-	    if (j->energy() > HBHEThreshold1) HEEneOOTTh1->Fill(j->energy());  
-	  }
-
-	  if (j->energy() > HBHEThreshold) {
-	    HEEneTh->Fill(j->energy()); 
-	    HETimeTh->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HETimeThFlagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0)  HETimeThFlagged->Fill(j->time()); 
-
-	    if (evt.id().run() >= StableRun) HETimeThR->Fill(j->time()); 
-	    HETotalE += j->energy();
-	    HEocc->Fill(j->id().ieta(),j->id().iphi());
-	    hitEta->Fill(j->id().ieta());
-	    hitPhi->Fill(j->id().iphi());
-	  }
-	  if (j->energy() > HBHEThreshold1) {
-	    HEEneTh1->Fill(j->energy()); 
-	    HETimeTh1->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HETimeTh1Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeTh1Flagged->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HETimeTh1R->Fill(j->time()); 
-	    if ((j->time()<-25.) || (j->time()>75.)) {
-	      HEoccOOT->Fill(j->id().ieta(),j->id().iphi());
-	    }
-	  }
-	  if (j->energy() > HBHEThreshold2) {
-	    HETimeTh2->Fill(j->time()); 
-	    if (!Pass_NoiseSummary) HETimeTh2Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeTh2Flagged->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HETimeTh2R->Fill(j->time()); 
-	  }
-	  if (j->energy() > HBHEThreshold3) {
-	    HETimeTh3->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HETimeTh3R->Fill(j->time()); 
-	  }
-
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
-	    HEEneX->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) HETimeX->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
-	    HEEneY->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) HETimeY->Fill(j->time()); 
-	  }
-
-	  // Fill +-HE separately
-	  if (j->id().ieta()<0) {
-	    HEnegEne->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) {
-	      HEnegTime->Fill(j->time()); 
-	    }
-	  } else {
-	    HEposEne->Fill(j->energy()); 
-	    if (j->energy() > HBHEThreshold) {
-	      HEposTime->Fill(j->time()); 
-	    }
-	  }
-	  
+          if (evt.id().run() >= StableRun) HBTimeThR->Fill(j->time()); 
+          HBTotalE += j->energy();
+          HBocc->Fill(j->id().ieta(),j->id().iphi());
+          hitEta->Fill(j->id().ieta());
+          hitPhi->Fill(j->id().iphi());
         }
+        if (j->energy() > HBHEThreshold1) {
+          HBEneTh1->Fill(j->energy()); 
+          HBTimeTh1->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HBTimeTh1Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeTh1Flagged->Fill(j->time()); 
 
-        /***
-        std::cout << j->id()     << " "
-                  << j->id().subdet() << " "
-                  << j->id().ieta()   << " "
-                  << j->id().iphi()   << " "
-                  << j->id().depth()  << " "
-                  << j->energy() << " "
-                  << j->time()   << std::endl;
-        ****/
+          if (evt.id().run() >= StableRun) HBTimeTh1R->Fill(j->time()); 
+          if ((j->time()<-25.) || (j->time()>75.)) {
+            HBoccOOT->Fill(j->id().ieta(),j->id().iphi());
+          }
+        }
+        if (j->energy() > HBHEThreshold2) {
+          HBTimeTh2->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HBTimeTh2Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HBTimeTh2Flagged->Fill(j->time()); 
+
+          if (evt.id().run() >= StableRun) HBTimeTh2R->Fill(j->time()); 
+        }
+        if (j->energy() > HBHEThreshold3) {
+          HBTimeTh3->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HBTimeTh3R->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
+          HBEneX->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) HBTimeX->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
+          HBEneY->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) HBTimeY->Fill(j->time()); 
+        }
       }
-    }
-  } catch (...) {
-    cout << "No HB/HE RecHits." << endl;
-  }
+      if (j->id().subdet() == HcalEndcap) {
+        HEEne->Fill(j->energy()); 
+        HETime->Fill(j->time()); 
+        if (!Pass_NoiseSummary) HETimeFlagged2->Fill(j->time()); 
+        if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeFlagged->Fill(j->time()); 
+        HETvsE->Fill(j->energy(), j->time());
 
+        if (j->time() > 20.) HEEneTThr->Fill(j->energy()); 
+
+        if ((j->time()<-25.) || (j->time()>75.)) {
+          HEEneOOT->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold)  HEEneOOTTh->Fill(j->energy());  
+          if (j->energy() > HBHEThreshold1) HEEneOOTTh1->Fill(j->energy());  
+        }
+
+        if (j->energy() > HBHEThreshold) {
+          HEEneTh->Fill(j->energy()); 
+          HETimeTh->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HETimeThFlagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0)  HETimeThFlagged->Fill(j->time()); 
+
+          if (evt.id().run() >= StableRun) HETimeThR->Fill(j->time()); 
+          HETotalE += j->energy();
+          HEocc->Fill(j->id().ieta(),j->id().iphi());
+          hitEta->Fill(j->id().ieta());
+          hitPhi->Fill(j->id().iphi());
+        }
+        if (j->energy() > HBHEThreshold1) {
+          HEEneTh1->Fill(j->energy()); 
+          HETimeTh1->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HETimeTh1Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeTh1Flagged->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HETimeTh1R->Fill(j->time()); 
+          if ((j->time()<-25.) || (j->time()>75.)) {
+            HEoccOOT->Fill(j->id().ieta(),j->id().iphi());
+          }
+        }
+        if (j->energy() > HBHEThreshold2) {
+          HETimeTh2->Fill(j->time()); 
+          if (!Pass_NoiseSummary) HETimeTh2Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HBHETimingShapedCutsBits) != 0) HETimeTh2Flagged->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HETimeTh2R->Fill(j->time()); 
+        }
+        if (j->energy() > HBHEThreshold3) {
+          HETimeTh3->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HETimeTh3R->Fill(j->time()); 
+        }
+
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
+          HEEneX->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) HETimeX->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
+          HEEneY->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) HETimeY->Fill(j->time()); 
+        }
+
+        // Fill +-HE separately
+        if (j->id().ieta()<0) {
+          HEnegEne->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) {
+            HEnegTime->Fill(j->time()); 
+          }
+        } else {
+          HEposEne->Fill(j->energy()); 
+          if (j->energy() > HBHEThreshold) {
+            HEposTime->Fill(j->time()); 
+          }
+        }
+        
+      }
+
+      /***
+      std::cout << j->id()     << " "
+                << j->id().subdet() << " "
+                << j->id().ieta()   << " "
+                << j->id().iphi()   << " "
+                << j->id().depth()  << " "
+                << j->energy() << " "
+                << j->time()   << std::endl;
+      ****/
+    }
+  }
 
   HFM_ETime = 0.;
   HFM_E = 0.;
@@ -1819,210 +1799,200 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
 
   int NPMTHits;
   NPMTHits = 0;
-  try {
-    std::vector<edm::Handle<HFRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
-	     (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
-	     NPMTHits++;
-	}
+  std::vector<edm::Handle<HFRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
+           (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+           NPMTHits++;
       }
-      break;
     }
-  } catch (...) {
-    cout << "No HF RecHits." << endl;
+    break;
   }
 
 
   PMTHits->Fill(NPMTHits); 
 
-  try {
-    std::vector<edm::Handle<HFRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+  std::vector<edm::Handle<HFRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
 
-	/****
-	float en = j->energy();
-	HcalDetId id(j->detid().rawId());
-	int ieta = id.ieta();
-	int iphi = id.iphi();
-	int depth = id.depth();
-	*****/
+      /****
+      float en = j->energy();
+      HcalDetId id(j->detid().rawId());
+      int ieta = id.ieta();
+      int iphi = id.iphi();
+      int depth = id.depth();
+      *****/
 
-	//  std::cout << *j << std::endl;
+      //  std::cout << *j << std::endl;
 
-        if (j->id().subdet() == HcalForward) {
+      if (j->id().subdet() == HcalForward) {
 
-	  if (NPMTHits == 1) {
-	    if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
-		 (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
-	      HFEtaFlagged->Fill(j->id().ieta());
-	      if (j->id().depth() == 1) HFEtaFlaggedL->Fill(j->id().ieta());
-	      if (j->id().depth() == 2) HFEtaFlaggedS->Fill(j->id().ieta());
-	    } else {
-	      HFEtaNFlagged->Fill(j->id().ieta(), j->energy());
-	      HFEtaPhiNFlagged->Fill(j->id().ieta(),j->id().iphi(),j->energy());
-	    }
-	  }
-	  if (j->energy() > 20.) {
-	    if (NPMTHits == 0) {
-	      HFEnePMT0->Fill(j->energy()); 
-	      HFTimePMT0->Fill(j->time()); 
-	    }
-	    if (NPMTHits == 1) {
-	      if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
-		   (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
-		HFEnePMT1->Fill(j->energy()); 
-		HFTimePMT1->Fill(j->time()); 
-	      }
-	    }
-	    if (NPMTHits > 1) {
-	      if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
-		   (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
-		HFEnePMT2->Fill(j->energy()); 
-		HFTimePMT2->Fill(j->time()); 
-	      }
-	    }
-	  }
+        if (NPMTHits == 1) {
+          if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
+      	 (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+            HFEtaFlagged->Fill(j->id().ieta());
+            if (j->id().depth() == 1) HFEtaFlaggedL->Fill(j->id().ieta());
+            if (j->id().depth() == 2) HFEtaFlaggedS->Fill(j->id().ieta());
+          } else {
+            HFEtaNFlagged->Fill(j->id().ieta(), j->energy());
+            HFEtaPhiNFlagged->Fill(j->id().ieta(),j->id().iphi(),j->energy());
+          }
+        }
+        if (j->energy() > 20.) {
+          if (NPMTHits == 0) {
+            HFEnePMT0->Fill(j->energy()); 
+            HFTimePMT0->Fill(j->time()); 
+          }
+          if (NPMTHits == 1) {
+            if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
+      	   (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+      	HFEnePMT1->Fill(j->energy()); 
+      	HFTimePMT1->Fill(j->time()); 
+            }
+          }
+          if (NPMTHits > 1) {
+            if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) ||
+      	   (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+      	HFEnePMT2->Fill(j->energy()); 
+      	HFTimePMT2->Fill(j->time()); 
+            }
+          }
+        }
 
-	  HFTimeVsiEtaP->Fill(j->id().ieta(), j->time());
-	  HFTimeVsiEtaM->Fill(j->id().ieta(), j->time());
+        HFTimeVsiEtaP->Fill(j->id().ieta(), j->time());
+        HFTimeVsiEtaM->Fill(j->id().ieta(), j->time());
 
-	  if (j->energy() > 5.) { 
-	    HFTimeVsiEtaP5->Fill(j->id().ieta(), j->time());
-	    HFTimeVsiEtaM5->Fill(j->id().ieta(), j->time());
-	  }	  
+        if (j->energy() > 5.) { 
+          HFTimeVsiEtaP5->Fill(j->id().ieta(), j->time());
+          HFTimeVsiEtaM5->Fill(j->id().ieta(), j->time());
+        }	  
 
-	  if (j->energy() > 20.) { 
-	    HFTimeVsiEtaP20->Fill(j->id().ieta(), j->time());
-	    HFTimeVsiEtaM20->Fill(j->id().ieta(), j->time());
-	  }	  
+        if (j->energy() > 20.) { 
+          HFTimeVsiEtaP20->Fill(j->id().ieta(), j->time());
+          HFTimeVsiEtaM20->Fill(j->id().ieta(), j->time());
+        }	  
 
-	  HFEne->Fill(j->energy()); 
-	  HFTime->Fill(j->time()); 
-	  HFTvsE->Fill(j->energy(), j->time());
+        HFEne->Fill(j->energy()); 
+        HFTime->Fill(j->time()); 
+        HFTvsE->Fill(j->energy(), j->time());
 
-	  if (j->time() > 20.) HFEneTThr->Fill(j->energy()); 
-	 
-	  if (j->energy() > 10.) HFTvsEThr->Fill(j->energy(), j->time());
+        if (j->time() > 20.) HFEneTThr->Fill(j->energy()); 
+       
+        if (j->energy() > 10.) HFTvsEThr->Fill(j->energy(), j->time());
 
-	  if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1)|| 
-	       (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
-	    HFEneFlagged->Fill(j->energy());
-	    HFoccFlagged->Fill(j->id().ieta(),j->id().iphi());
-	    HFTimeFlagged->Fill(j->time()); 
-	    HFTvsEFlagged->Fill(j->energy(), j->time());
+        if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1)|| 
+             (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+          HFEneFlagged->Fill(j->energy());
+          HFoccFlagged->Fill(j->id().ieta(),j->id().iphi());
+          HFTimeFlagged->Fill(j->time()); 
+          HFTvsEFlagged->Fill(j->energy(), j->time());
 
-	    //	    std::cout << "Flagged:  " << j->energy() << " "
-	    //		      << j->time()
-	    //		      << std::endl;
-	  }
+          //	    std::cout << "Flagged:  " << j->energy() << " "
+          //		      << j->time()
+          //		      << std::endl;
+        }
 
 
-	  if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) {
-	    HFEneFlagged2->Fill(j->energy());
-	    HFoccFlagged2->Fill(j->id().ieta(),j->id().iphi());
-	    HFTimeFlagged2->Fill(j->time()); 
-	    HFTvsEFlagged2->Fill(j->energy(), j->time());
-	    if (j->energy() > 10.) HFTvsEFlagged2Thr->Fill(j->energy(), j->time());
-	  }
+        if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) {
+          HFEneFlagged2->Fill(j->energy());
+          HFoccFlagged2->Fill(j->id().ieta(),j->id().iphi());
+          HFTimeFlagged2->Fill(j->time()); 
+          HFTvsEFlagged2->Fill(j->energy(), j->time());
+          if (j->energy() > 10.) HFTvsEFlagged2Thr->Fill(j->energy(), j->time());
+        }
 
-	  if (j->flagField(HcalCaloFlagLabels::HFDigiTime) == 1) {
-	    HFTimeFlagged3->Fill(j->time()); 
-	  }
+        if (j->flagField(HcalCaloFlagLabels::HFDigiTime) == 1) {
+          HFTimeFlagged3->Fill(j->time()); 
+        }
 
-	  if (j->energy() > HFThreshold) {
-	    HFEneTh->Fill(j->energy()); 
-	    HFTimeTh->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeThFlagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeThFlagged3->Fill(j->time()); 
+        if (j->energy() > HFThreshold) {
+          HFEneTh->Fill(j->energy()); 
+          HFTimeTh->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeThFlagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeThFlagged3->Fill(j->time()); 
 
-	    if (evt.id().run() >= StableRun) HFTimeThR->Fill(j->time()); 
-	    if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1)|| 
-		 (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
+          if (evt.id().run() >= StableRun) HFTimeThR->Fill(j->time()); 
+          if ( (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1)|| 
+      	 (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) ) {
 
-	      HFTimeThFlagged->Fill(j->time()); 
+            HFTimeThFlagged->Fill(j->time()); 
 
-	      if (j->energy() > HFThreshold2) HFTimeTh2Flagged->Fill(j->time()); 
-	      if (j->energy() > HFThreshold3) HFTimeTh3Flagged->Fill(j->time()); 
+            if (j->energy() > HFThreshold2) HFTimeTh2Flagged->Fill(j->time()); 
+            if (j->energy() > HFThreshold3) HFTimeTh3Flagged->Fill(j->time()); 
 
-	      if (evt.id().run() >= StableRun) {
-		HFTimeThFlaggedR->Fill(j->time()); 
-		if (NPMTHits == 1) HFTimeThFlaggedR1->Fill(j->time()); 
-		if (NPMTHits == 2) HFTimeThFlaggedR2->Fill(j->time()); 
-		if (NPMTHits == 3) HFTimeThFlaggedR3->Fill(j->time()); 
-		if (NPMTHits == 4) HFTimeThFlaggedR4->Fill(j->time()); 
-		if (NPMTHits > 1) HFTimeThFlaggedRM->Fill(j->time()); 
-	      }
-	    }
-	    HFTotalE += j->energy();
-	    HFocc->Fill(j->id().ieta(),j->id().iphi());
-	    hitEta->Fill(j->id().ieta());
-	    hitPhi->Fill(j->id().iphi());
-	  }
+            if (evt.id().run() >= StableRun) {
+      	HFTimeThFlaggedR->Fill(j->time()); 
+      	if (NPMTHits == 1) HFTimeThFlaggedR1->Fill(j->time()); 
+      	if (NPMTHits == 2) HFTimeThFlaggedR2->Fill(j->time()); 
+      	if (NPMTHits == 3) HFTimeThFlaggedR3->Fill(j->time()); 
+      	if (NPMTHits == 4) HFTimeThFlaggedR4->Fill(j->time()); 
+      	if (NPMTHits > 1) HFTimeThFlaggedRM->Fill(j->time()); 
+            }
+          }
+          HFTotalE += j->energy();
+          HFocc->Fill(j->id().ieta(),j->id().iphi());
+          hitEta->Fill(j->id().ieta());
+          hitPhi->Fill(j->id().iphi());
+        }
 
-	  if (j->energy() > HFThreshold1) {
-	    HFEneTh1->Fill(j->energy());
-	    HFTimeTh1->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh1Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh1Flagged3->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HFTimeTh1R->Fill(j->time()); 
-	    if ((j->time()<-20.) || (j->time()>20.)) {
-	      HFoccOOT->Fill(j->id().ieta(),j->id().iphi());
-	    }
-	  } 
-	  if (j->energy() > HFThreshold2) {
-	    HFTimeTh2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh2Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh2Flagged3->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HFTimeTh2R->Fill(j->time()); 
-	  }
-	  if (j->energy() > HFThreshold3) {
-	    HFTimeTh3->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh3Flagged2->Fill(j->time()); 
-	    if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh3Flagged3->Fill(j->time()); 
-	    if (evt.id().run() >= StableRun) HFTimeTh3R->Fill(j->time()); 
-	  }
+        if (j->energy() > HFThreshold1) {
+          HFEneTh1->Fill(j->energy());
+          HFTimeTh1->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh1Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh1Flagged3->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HFTimeTh1R->Fill(j->time()); 
+          if ((j->time()<-20.) || (j->time()>20.)) {
+            HFoccOOT->Fill(j->id().ieta(),j->id().iphi());
+          }
+        } 
+        if (j->energy() > HFThreshold2) {
+          HFTimeTh2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh2Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh2Flagged3->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HFTimeTh2R->Fill(j->time()); 
+        }
+        if (j->energy() > HFThreshold3) {
+          HFTimeTh3->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFLongShort) == 1) HFTimeTh3Flagged2->Fill(j->time()); 
+          if (j->flagField(HcalCaloFlagLabels::HFDigiTime)  == 1) HFTimeTh3Flagged3->Fill(j->time()); 
+          if (evt.id().run() >= StableRun) HFTimeTh3R->Fill(j->time()); 
+        }
 
-	  if (j->id().ieta()<0) {
-	    if (j->energy() > HFThreshold) {
-	      //	      HFTimeM->Fill(j->time()); 
-	      HFEneM->Fill(j->energy()); 
-	      HFM_ETime += j->energy()*j->time(); 
-	      HFM_E     += j->energy();
-	    }
-	  } else {
-	    if (j->energy() > HFThreshold) {
-	      //	      HFTimeP->Fill(j->time()); 
-	      HFEneP->Fill(j->energy()); 
-	      HFP_ETime += j->energy()*j->time(); 
-	      HFP_E     += j->energy();
-	    }
-	  }
+        if (j->id().ieta()<0) {
+          if (j->energy() > HFThreshold) {
+            //	      HFTimeM->Fill(j->time()); 
+            HFEneM->Fill(j->energy()); 
+            HFM_ETime += j->energy()*j->time(); 
+            HFM_E     += j->energy();
+          }
+        } else {
+          if (j->energy() > HFThreshold) {
+            //	      HFTimeP->Fill(j->time()); 
+            HFEneP->Fill(j->energy()); 
+            HFP_ETime += j->energy()*j->time(); 
+            HFP_E     += j->energy();
+          }
+        }
 
-	  // Long and short fibers
-	  if (j->id().depth() == 1){
-	    HFLEne->Fill(j->energy()); 
-	    if (j->energy() > HFThreshold) HFLTime->Fill(j->time());
-	  } else {
-	    HFSEne->Fill(j->energy()); 
-	    if (j->energy() > HFThreshold) HFSTime->Fill(j->time());
-	  }
+        // Long and short fibers
+        if (j->id().depth() == 1){
+          HFLEne->Fill(j->energy()); 
+          if (j->energy() > HFThreshold) HFLTime->Fill(j->time());
+        } else {
+          HFSEne->Fill(j->energy()); 
+          if (j->energy() > HFThreshold) HFSTime->Fill(j->time());
         }
       }
-      break;
-
     }
+    break;
 
-  } catch (...) {
-    cout << "No HF RecHits." << endl;
   }
-
 
 
   for (int ieta=0; ieta<100; ieta++) {
@@ -2101,75 +2071,70 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   }
 
 
-
-  try {
-    std::vector<edm::Handle<HORecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HORecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HORecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-        if (j->id().subdet() == HcalOuter) {
-	  HOEne->Fill(j->energy()); 
-	  HOTime->Fill(j->time());
-	  HOTvsE->Fill(j->energy(), j->time());
-	  if (j->energy() > HOThreshold1) {
-	    HOEneTh1->Fill(j->energy()); 
-	  }
-	  if (j->energy() > HOThreshold) {
-	    HOEneTh->Fill(j->energy()); 
-	    HOTimeTh->Fill(j->time());
-	    HOTotalE += j->energy();
-	    HOocc->Fill(j->id().ieta(),j->id().iphi());
-	  }
-
-	  // Separate SiPMs and HPDs:
-	  if (((j->id().iphi()>=59 && j->id().iphi()<=70 && 
-		j->id().ieta()>=11 && j->id().ieta()<=15) || 
-	       (j->id().iphi()>=47 && j->id().iphi()<=58 && 
-		j->id().ieta()>=5 && j->id().ieta()<=10)))
-	  {  
-	    HOSEne->Fill(j->energy());
-	    if (j->energy() > HOThreshold) HOSTime->Fill(j->time());
-	  } else if ((j->id().iphi()<59 || j->id().iphi()>70 || 
-		      j->id().ieta()<11 || j->id().ieta()>15) && 
-		     (j->id().iphi()<47 || j->id().iphi()>58 ||
-		      j->id().ieta()<5  || j->id().ieta()>10))
-	  {
-	    HOHEne->Fill(j->energy());
-	    if (j->energy() > HOThreshold) HOHTime->Fill(j->time());
-	    // Separate rings -1,-2,0,1,2 in HPDs:
-	    if (j->id().ieta()<= -11){
-	      HOHrm2Ene->Fill(j->energy());
-	      if (j->energy() > HOThreshold) HOHrm2Time->Fill(j->time());
-	    } else if (j->id().ieta()>= -10 && j->id().ieta() <= -5) {
-	      HOHrm1Ene->Fill(j->energy());
-	      if (j->energy() > HOThreshold) HOHrm1Time->Fill(j->time());
-	    } else if (j->id().ieta()>= -4 && j->id().ieta() <= 4) {
-	      HOHr0Ene->Fill(j->energy());
-	      if (j->energy() > HOThreshold) HOHr0Time->Fill(j->time());
-	    } else if (j->id().ieta()>= 5 && j->id().ieta() <= 10) {
-	      HOHrp1Ene->Fill(j->energy());
-	      if (j->energy() > HOThreshold) HOHrp1Time->Fill(j->time());
-	    } else if (j->id().ieta()>= 11) {
-	      HOHrp2Ene->Fill(j->energy());
-	      if (j->energy() > HOThreshold) HOHrp2Time->Fill(j->time());
-	    } else {
-	      std::cout << "Finding events that are in no ring !?!" << std::endl;
-	      std::cout << "eta = " << j->id().ieta() << std::endl;
-	      
-	    }
-	  } else {
-	    std::cout << "Finding events that are neither SiPM nor HPD!?" << std::endl;	    
-	  }
-
-	  
-
+  std::vector<edm::Handle<HORecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HORecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HORecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      if (j->id().subdet() == HcalOuter) {
+        HOEne->Fill(j->energy()); 
+        HOTime->Fill(j->time());
+        HOTvsE->Fill(j->energy(), j->time());
+        if (j->energy() > HOThreshold1) {
+          HOEneTh1->Fill(j->energy()); 
         }
-        //      std::cout << *j << std::endl;
+        if (j->energy() > HOThreshold) {
+          HOEneTh->Fill(j->energy()); 
+          HOTimeTh->Fill(j->time());
+          HOTotalE += j->energy();
+          HOocc->Fill(j->id().ieta(),j->id().iphi());
+        }
+
+        // Separate SiPMs and HPDs:
+        if (((j->id().iphi()>=59 && j->id().iphi()<=70 && 
+      	j->id().ieta()>=11 && j->id().ieta()<=15) || 
+             (j->id().iphi()>=47 && j->id().iphi()<=58 && 
+      	j->id().ieta()>=5 && j->id().ieta()<=10)))
+        {  
+          HOSEne->Fill(j->energy());
+          if (j->energy() > HOThreshold) HOSTime->Fill(j->time());
+        } else if ((j->id().iphi()<59 || j->id().iphi()>70 || 
+      	      j->id().ieta()<11 || j->id().ieta()>15) && 
+      	     (j->id().iphi()<47 || j->id().iphi()>58 ||
+      	      j->id().ieta()<5  || j->id().ieta()>10))
+        {
+          HOHEne->Fill(j->energy());
+          if (j->energy() > HOThreshold) HOHTime->Fill(j->time());
+          // Separate rings -1,-2,0,1,2 in HPDs:
+          if (j->id().ieta()<= -11){
+            HOHrm2Ene->Fill(j->energy());
+            if (j->energy() > HOThreshold) HOHrm2Time->Fill(j->time());
+          } else if (j->id().ieta()>= -10 && j->id().ieta() <= -5) {
+            HOHrm1Ene->Fill(j->energy());
+            if (j->energy() > HOThreshold) HOHrm1Time->Fill(j->time());
+          } else if (j->id().ieta()>= -4 && j->id().ieta() <= 4) {
+            HOHr0Ene->Fill(j->energy());
+            if (j->energy() > HOThreshold) HOHr0Time->Fill(j->time());
+          } else if (j->id().ieta()>= 5 && j->id().ieta() <= 10) {
+            HOHrp1Ene->Fill(j->energy());
+            if (j->energy() > HOThreshold) HOHrp1Time->Fill(j->time());
+          } else if (j->id().ieta()>= 11) {
+            HOHrp2Ene->Fill(j->energy());
+            if (j->energy() > HOThreshold) HOHrp2Time->Fill(j->time());
+          } else {
+            std::cout << "Finding events that are in no ring !?!" << std::endl;
+            std::cout << "eta = " << j->id().ieta() << std::endl;
+            
+          }
+        } else {
+          std::cout << "Finding events that are neither SiPM nor HPD!?" << std::endl;	    
+        }
+
+        
+
       }
+      //      std::cout << *j << std::endl;
     }
-  } catch (...) {
-    cout << "No HO RecHits." << endl;
   }
 
   // HCALTotalE = HBTotalE + HETotalE + HFTotalE + HOTotalE;
@@ -2177,104 +2142,92 @@ void myJetAna::analyze( const edm::Event& evt, const edm::EventSetup& es ) {
   EBTotalE = EETotalE = 0.;
 
 
-  try {
-    std::vector<edm::Handle<EcalRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<EcalRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (EcalRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	if (j->id().subdetId() == EcalBarrel) {
-	  EBEne->Fill(j->energy()); 
-	  EBTime->Fill(j->time()); 
-	  if (j->energy() > EBEEThreshold) {
-	    EBEneTh->Fill(j->energy()); 
-	    EBTimeTh->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
-	    EBEneX->Fill(j->energy()); 
-	    EBTimeX->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
-	    EBEneY->Fill(j->energy()); 
-	    EBTimeY->Fill(j->time()); 
-	  }
-	  EBTotalE += j->energy();
-	}
-	if (j->id().subdetId() == EcalEndcap) {
-	  EEEne->Fill(j->energy()); 
-	  EETime->Fill(j->time());
-	  if (j->energy() > EBEEThreshold) {
-	    EEEneTh->Fill(j->energy()); 
-	    EETimeTh->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
-	    EEEneX->Fill(j->energy()); 
-	    EETimeX->Fill(j->time()); 
-	  }
-	  if ( (evt.id().run() == 120020) && (evt.id().event() == 457 ) ) {
-	    EEEneY->Fill(j->energy()); 
-	    EETimeY->Fill(j->time()); 
-	  }
-	  EETotalE += j->energy();
-	}
-	//	std::cout << *j << std::endl;
-	//	std::cout << "EB ID = " << j->id().subdetId() << "/" << EcalBarrel << std::endl;
+  std::vector<edm::Handle<EcalRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<EcalRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (EcalRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      if (j->id().subdetId() == EcalBarrel) {
+        EBEne->Fill(j->energy()); 
+        EBTime->Fill(j->time()); 
+        if (j->energy() > EBEEThreshold) {
+          EBEneTh->Fill(j->energy()); 
+          EBTimeTh->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
+          EBEneX->Fill(j->energy()); 
+          EBTimeX->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 457) ) {
+          EBEneY->Fill(j->energy()); 
+          EBTimeY->Fill(j->time()); 
+        }
+        EBTotalE += j->energy();
       }
+      if (j->id().subdetId() == EcalEndcap) {
+        EEEne->Fill(j->energy()); 
+        EETime->Fill(j->time());
+        if (j->energy() > EBEEThreshold) {
+          EEEneTh->Fill(j->energy()); 
+          EETimeTh->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 453) ) {
+          EEEneX->Fill(j->energy()); 
+          EETimeX->Fill(j->time()); 
+        }
+        if ( (evt.id().run() == 120020) && (evt.id().event() == 457 ) ) {
+          EEEneY->Fill(j->energy()); 
+          EETimeY->Fill(j->time()); 
+        }
+        EETotalE += j->energy();
+      }
+      //	std::cout << *j << std::endl;
+      //	std::cout << "EB ID = " << j->id().subdetId() << "/" << EcalBarrel << std::endl;
     }
-  } catch (...) {
-    cout << "No ECAL RecHits." << endl;
   }
 
   EBvHB->Fill(HBTotalE, EBTotalE);
   EEvHE->Fill(HETotalE, EETotalE);
 
   /*****
-  try {
-    std::vector<edm::Handle<EBRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<EBRecHitCollection> >::iterator i;
+  std::vector<edm::Handle<EBRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<EBRecHitCollection> >::iterator i;
 
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (EBRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	//	if (j->id().subdetId() == EcalBarrel) {
-	  EBEne->Fill(j->energy()); 
-	  EBTime->Fill(j->time()); 
-	  //	  EBTotalE = j->energy();
-	  //	}
-	  //	std::cout << *j << std::endl;
-	  //	std::cout << "EB ID = " << j->id().subdetId() << "/" << EcalBarrel << std::endl;
-      }
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (EBRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //	if (j->id().subdetId() == EcalBarrel) {
+        EBEne->Fill(j->energy()); 
+        EBTime->Fill(j->time()); 
+        //	  EBTotalE = j->energy();
+        //	}
+        //	std::cout << *j << std::endl;
+        //	std::cout << "EB ID = " << j->id().subdetId() << "/" << EcalBarrel << std::endl;
     }
-  } catch (...) {
-    cout << "No EB RecHits." << endl;
   }
 
-  try {
-    std::vector<edm::Handle<EERecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<EERecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (EERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	//	if (j->id().subdetId() == EcalEndcap) {
-	  EEEne->Fill(j->energy()); 
-	  EETime->Fill(j->time());
-	  //	  EETotalE = j->energy();
-	  // Separate +-EE;
-	  EEDetId EEid = EEDetId(j->id());
-	  if (!EEid.positiveZ()) 
-	  {
-	    EEnegEne->Fill(j->energy()); 
-	    EEnegTime->Fill(j->time()); 
-	  }else{
-	    EEposEne->Fill(j->energy()); 
-	    EEposTime->Fill(j->time()); 
-	  }
-	  //	}
-	//	std::cout << *j << std::endl;
-      }
+  std::vector<edm::Handle<EERecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<EERecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (EERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //	if (j->id().subdetId() == EcalEndcap) {
+        EEEne->Fill(j->energy()); 
+        EETime->Fill(j->time());
+        //	  EETotalE = j->energy();
+        // Separate +-EE;
+        EEDetId EEid = EEDetId(j->id());
+        if (!EEid.positiveZ()) 
+        {
+          EEnegEne->Fill(j->energy()); 
+          EEnegTime->Fill(j->time()); 
+        }else{
+          EEposEne->Fill(j->energy()); 
+          EEposTime->Fill(j->time()); 
+        }
+        //	}
+      //	std::cout << *j << std::endl;
     }
-  } catch (...) {
-    cout << "No EE RecHits." << endl;
   }
   ******/
 

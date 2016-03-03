@@ -59,6 +59,8 @@ private:
   edm::InputTag hcalNoiseSummaryTag_;
   std::string JetCorrectionService;
 
+  int totBNC
+  float nBNC[4000];
 
   // --- Passed selection cuts
   TH1F *h_pt;
