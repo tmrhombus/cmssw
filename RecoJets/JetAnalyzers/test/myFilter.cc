@@ -5,6 +5,7 @@
 #include "DataFormats/METReco/interface/CaloMET.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/METReco/interface/HcalCaloFlagLabels.h"
@@ -127,41 +128,41 @@ void myFilter::beginJob() {
 
 void myFilter::endJob() {
 
-  std::cout << "=============================================================" << std::endl;
-  std::cout << "myFilter: accepted " 
-	    << _acceptedEvt << " / " <<  _nEvent <<  " / " << _nTotal << " events" << std::endl;
-  std::cout << "Pt            = " << _passPt          << std::endl;
-  std::cout << "NJets         = " << _passNJets       << std::endl;
-  std::cout << "DiJets        = " << _passDiJet       << std::endl;
-  std::cout << "NTrks         = " << _passNTrks       << std::endl;
-  std::cout << "EMF           = " << _passEMF         << std::endl;
-  std::cout << "NTowers       = " << _passNTowers     << std::endl;
-  std::cout << "MET           = " << _passMET         << std::endl;
-  std::cout << "METSig        = " << _passMETSig      << std::endl;
-  std::cout << "HighPtTower   = " << _passHighPtTower << std::endl;
-  std::cout << "NRBX          = " << _passNRBX        << std::endl;
-  std::cout << "NHPDNoise     = " << _passNHPDNoise   << std::endl;
-  std::cout << "NPMTHits      = " << _passNPMTHits    << std::endl;
-  std::cout << "NMultPMTHits  = " << _passNMultiPMTHits    << std::endl;
-  std::cout << "PKAM          = " << _passPKAM    << std::endl;
-  std::cout << "HFMET         = " << _passHFMET    << std::endl;
-  std::cout << "Noise Summary = " << _passNoiseSummary    << std::endl;
-  std::cout << "Noise Summary EMF = " << _passNoiseSummaryEMF    << std::endl;
-  std::cout << "Noise Summary E2E10 = " << _passNoiseSummaryE2E10    << std::endl;
-  std::cout << "Noise Summary NHITS = " << _passNoiseSummaryNHITS    << std::endl;
-  std::cout << "Noise Summary ADC0 = " << _passNoiseSummaryADC0    << std::endl;
-  std::cout << "Noise Summary NoOther = " << _passNoiseSummaryNoOther    << std::endl;
-  std::cout << "OERatio       = " << _passOERatio    << std::endl;
-  std::cout << "Time          = " << _passTime    << std::endl;
-  std::cout << "HF Time       = " << _passHFTime    << std::endl;
-  std::cout << "HBHE Time     = " << _passHBHETime    << std::endl;
-  std::cout << "HF Flagged    = " << _passHFFlagged    << std::endl;
-  std::cout << "HF High Energy= " << _passHFHighEnergy    << std::endl;
-  std::cout << "=============================================================" << std::endl;
+  edm::LogInfo ("summary") << "=============================================================" ;
+  edm::LogVerbatim ("summary") << "myFilter: accepted " 
+                               << _acceptedEvt << " / " <<  _nEvent <<  " / " << _nTotal << " events" ;
+  edm::LogVerbatim ("summary") << "Pt            = " << _passPt          ;
+  edm::LogVerbatim ("summary") << "NJets         = " << _passNJets       ;
+  edm::LogVerbatim ("summary") << "DiJets        = " << _passDiJet       ;
+  edm::LogVerbatim ("summary") << "NTrks         = " << _passNTrks       ;
+  edm::LogVerbatim ("summary") << "EMF           = " << _passEMF         ;
+  edm::LogVerbatim ("summary") << "NTowers       = " << _passNTowers     ;
+  edm::LogVerbatim ("summary") << "MET           = " << _passMET         ;
+  edm::LogVerbatim ("summary") << "METSig        = " << _passMETSig      ;
+  edm::LogVerbatim ("summary") << "HighPtTower   = " << _passHighPtTower ;
+  edm::LogVerbatim ("summary") << "NRBX          = " << _passNRBX        ;
+  edm::LogVerbatim ("summary") << "NHPDNoise     = " << _passNHPDNoise   ;
+  edm::LogVerbatim ("summary") << "NPMTHits      = " << _passNPMTHits    ;
+  edm::LogVerbatim ("summary") << "NMultPMTHits  = " << _passNMultiPMTHits    ;
+  edm::LogVerbatim ("summary") << "PKAM          = " << _passPKAM    ;
+  edm::LogVerbatim ("summary") << "HFMET         = " << _passHFMET    ;
+  edm::LogVerbatim ("summary") << "Noise Summary = " << _passNoiseSummary    ;
+  edm::LogVerbatim ("summary") << "Noise Summary EMF = " << _passNoiseSummaryEMF    ;
+  edm::LogVerbatim ("summary") << "Noise Summary E2E10 = " << _passNoiseSummaryE2E10    ;
+  edm::LogVerbatim ("summary") << "Noise Summary NHITS = " << _passNoiseSummaryNHITS    ;
+  edm::LogVerbatim ("summary") << "Noise Summary ADC0 = " << _passNoiseSummaryADC0    ;
+  edm::LogVerbatim ("summary") << "Noise Summary NoOther = " << _passNoiseSummaryNoOther    ;
+  edm::LogVerbatim ("summary") << "OERatio       = " << _passOERatio    ;
+  edm::LogVerbatim ("summary") << "Time          = " << _passTime    ;
+  edm::LogVerbatim ("summary") << "HF Time       = " << _passHFTime    ;
+  edm::LogVerbatim ("summary") << "HBHE Time     = " << _passHBHETime    ;
+  edm::LogVerbatim ("summary") << "HF Flagged    = " << _passHFFlagged    ;
+  edm::LogVerbatim ("summary") << "HF High Energy= " << _passHFHighEnergy    ;
+  edm::LogVerbatim ("summary") << "=============================================================" ;
 
 
   for (int i=0; i<10; i++) {
-    std::cout << "Noise Results = " << _NoiseResult[i] << std::endl;
+    edm::LogVerbatim ("summary") << "Noise Results = " << _NoiseResult[i] ;
   }
 
 }
@@ -331,97 +332,91 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
   NHFDigiTimeHits   = 0;
   NHFLongShortHits  = 0;
 
-  try {
-    std::vector<edm::Handle<HFRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-        if (j->id().subdet() == HcalForward) {
+  std::vector<edm::Handle<HFRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      if (j->id().subdet() == HcalForward) {
 
-	  int myFlag;
-	  myFlag= j->flagField(HcalCaloFlagLabels::HFLongShort);
-	  if (myFlag==1) {
-	    filter_HFFlagged=true;
-	    NHFLongShortHits++;
-	  }
-	  myFlag= j->flagField(HcalCaloFlagLabels::HFDigiTime);
-	  if (myFlag==1) {
-	    filter_HFFlagged=true;
-	    NHFDigiTimeHits++;
-	  }
-
-	  if ( ( (j->flagField(HcalCaloFlagLabels::HFLongShort)) == 0) &&
-	       ( (j->flagField(HcalCaloFlagLabels::HFDigiTime))  == 0) ) {
-	    if (j->energy() > MaxRecHitEne) MaxRecHitEne = j->energy();
-	  }
-
-
-	  //	  if (filter_HFFlagged) {
-	  //	    std::cout << "HF Flagged         = " << _passHFFlagged          << std::endl;
-	  //	  }
-
-
-	  // Long:  depth = 1
-	  // Short: depth = 2
-	  float en = j->energy();
-	  float time = j->time();
-	  if ( (en > 20.) && (time > 10.)) {
-	    nTime++;
-	  }
-	  int ieta = j->id().ieta();
-	  int iphi = j->id().iphi();
-	  int depth = j->id().depth();
-	  HFRecHit[ieta+41][iphi][depth-1] = en;
-
-	  // Exclude PMTs with crystals 
-	  if (  (j->id().iphi() == 67) &&
-	       ((j->id().ieta() == 29) || 
-		((j->id().ieta() == 30) && (j->id().depth() == 2)) || 
-		((j->id().ieta() == 32) && (j->id().depth() == 2)) || 
-		((j->id().ieta() == 35) && (j->id().depth() == 1)) || 
-		((j->id().ieta() == 36) && (j->id().depth() == 2)) || 
-		((j->id().ieta() == 37) && (j->id().depth() == 1)) || 
-		((j->id().ieta() == 38) && (j->id().depth() == 2)) ) ) {
-	  } else {
-	    if ( (j->flagField(0) != 0) && (j->energy() > 1.) ) {
-	      NPMTHits++;
-	      if (NPMTHits > 1) {
-		std::cout << ">>>> MultiHit: Run = "    << evt.id().run()
-			  << " Event = " << evt.id().event()
-			  << " iEta = " << j->id().ieta()
-			  << " iPhi = " << j->id().iphi()
-			  << " depth = " << j->id().depth()
-			  << " flag = " << j->flagField(0)
-			  << " hits = " << NPMTHits
-			  << " energy = " << j->energy()
-			  <<  std::endl;
-	      }
-
-	    }
-	  }
-
-          if (j->id().ieta()<0) {
-            if (j->energy() > HFThreshold) {
-              HFM_ETime += j->energy()*j->time();
-              HFM_E     += j->energy();
-            }
-          } else {
-            if (j->energy() > HFThreshold) {
-              HFP_ETime += j->energy()*j->time();
-              HFP_E     += j->energy();
-            }
-          }
-
-
+        int myFlag;
+        myFlag= j->flagField(HcalCaloFlagLabels::HFLongShort);
+        if (myFlag==1) {
+          filter_HFFlagged=true;
+          NHFLongShortHits++;
         }
-      }
-      break;
-    }
-  } catch (cms::Exception& e) {
-    cout << " Product not found: 8006, No HF RecHits." << endl;
-  }
+        myFlag= j->flagField(HcalCaloFlagLabels::HFDigiTime);
+        if (myFlag==1) {
+          filter_HFFlagged=true;
+          NHFDigiTimeHits++;
+        }
 
+        if ( ( (j->flagField(HcalCaloFlagLabels::HFLongShort)) == 0) &&
+             ( (j->flagField(HcalCaloFlagLabels::HFDigiTime))  == 0) ) {
+          if (j->energy() > MaxRecHitEne) MaxRecHitEne = j->energy();
+        }
+
+
+        //	  if (filter_HFFlagged) {
+        //	    std::cout << "HF Flagged         = " << _passHFFlagged          << std::endl;
+        //	  }
+
+
+        // Long:  depth = 1
+        // Short: depth = 2
+        float en = j->energy();
+        float time = j->time();
+        if ( (en > 20.) && (time > 10.)) {
+          nTime++;
+        }
+        int ieta = j->id().ieta();
+        int iphi = j->id().iphi();
+        int depth = j->id().depth();
+        HFRecHit[ieta+41][iphi][depth-1] = en;
+
+        // Exclude PMTs with crystals 
+        if (  (j->id().iphi() == 67) &&
+             ((j->id().ieta() == 29) || 
+      	((j->id().ieta() == 30) && (j->id().depth() == 2)) || 
+      	((j->id().ieta() == 32) && (j->id().depth() == 2)) || 
+      	((j->id().ieta() == 35) && (j->id().depth() == 1)) || 
+      	((j->id().ieta() == 36) && (j->id().depth() == 2)) || 
+      	((j->id().ieta() == 37) && (j->id().depth() == 1)) || 
+      	((j->id().ieta() == 38) && (j->id().depth() == 2)) ) ) {
+        } else {
+          if ( (j->flagField(0) != 0) && (j->energy() > 1.) ) {
+            NPMTHits++;
+            if (NPMTHits > 1) {
+      	std::cout << ">>>> MultiHit: Run = "    << evt.id().run()
+      		  << " Event = " << evt.id().event()
+      		  << " iEta = " << j->id().ieta()
+      		  << " iPhi = " << j->id().iphi()
+      		  << " depth = " << j->id().depth()
+      		  << " flag = " << j->flagField(0)
+      		  << " hits = " << NPMTHits
+      		  << " energy = " << j->energy()
+      		  <<  std::endl;
+            }
+
+          }
+        }
+
+        if (j->id().ieta()<0) {
+          if (j->energy() > HFThreshold) {
+            HFM_ETime += j->energy()*j->time();
+            HFM_E     += j->energy();
+          }
+        } else {
+          if (j->energy() > HFThreshold) {
+            HFP_ETime += j->energy()*j->time();
+            HFP_E     += j->energy();
+          }
+        }
+
+
+      }
+    }
+    break;
 
   if (MaxRecHitEne > 1000.) filter_HFHighEnergy = true;
 
