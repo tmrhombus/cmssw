@@ -387,15 +387,14 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
           if ( (j->flagField(0) != 0) && (j->energy() > 1.) ) {
             NPMTHits++;
             if (NPMTHits > 1) {
-      	std::cout << ">>>> MultiHit: Run = "    << evt.id().run()
+      	edm::LogInfo("summary") << ">>>> MultiHit: Run = "    << evt.id().run()
       		  << " Event = " << evt.id().event()
       		  << " iEta = " << j->id().ieta()
       		  << " iPhi = " << j->id().iphi()
       		  << " depth = " << j->id().depth()
       		  << " flag = " << j->flagField(0)
       		  << " hits = " << NPMTHits
-      		  << " energy = " << j->energy()
-      		  <<  std::endl;
+      		  << " energy = " << j->energy() ;
             }
 
           }
@@ -737,74 +736,60 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
   int nHPDNoise = 0;
   nTime = 0;
 
-  try {
-    std::vector<edm::Handle<HBHERecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HBHERecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HBHERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	//	std::cout << *j << std::endl;
-	if (j->id().subdet() == HcalBarrel) {
-	  //	  std::cout << "Barrel : " << j->id() << std::endl;
-	}
-	if (j->id().subdet() == HcalEndcap) {
-	}
-
-	if (j->flagField(0) != 0) nHPDNoise++;
-
-	float en = j->energy();
-	float time = j->time();
-
-	if ( (en > 10.) && (time > 20.)) {
-	  nTime++;
-	}
-
-	/***
-	std::cout << j->id()     << " "
-		  << j->id().subdet() << " "
-		  << j->id().ieta()   << " "
-		  << j->id().iphi()   << " "
-		  << j->id().depth()  << " "
-		  << j->energy() << " "
-		  << j->time()   << std::endl;
-	****/
+  std::vector<edm::Handle<HBHERecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HBHERecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HBHERecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //	std::cout << *j << std::endl;
+      if (j->id().subdet() == HcalBarrel) {
+        //	  std::cout << "Barrel : " << j->id() << std::endl;
       }
+      if (j->id().subdet() == HcalEndcap) {
+      }
+
+      if (j->flagField(0) != 0) nHPDNoise++;
+
+      float en = j->energy();
+      float time = j->time();
+
+      if ( (en > 10.) && (time > 20.)) {
+        nTime++;
+      }
+
+      /***
+      std::cout << j->id()     << " "
+      	  << j->id().subdet() << " "
+      	  << j->id().ieta()   << " "
+      	  << j->id().iphi()   << " "
+      	  << j->id().depth()  << " "
+      	  << j->energy() << " "
+      	  << j->time()   << std::endl;
+      ****/
     }
-  } catch (...) {
-    cout << "No HB/HE RecHits." << endl;
   }
 
   if (nHPDNoise > 10) filter_NHPDNoise = true;
   if (nTime > 0) filter_HBHETime = true;
 
 
-  try {
-    std::vector<edm::Handle<HFRecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	//	std::cout << *j << std::endl;
-      }
+  std::vector<edm::Handle<HFRecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HFRecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HFRecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //	std::cout << *j << std::endl;
     }
-  } catch (...) {
-    cout << "No HF RecHits." << endl;
   }
     
-  try {
-    std::vector<edm::Handle<HORecHitCollection> > colls;
-    evt.getManyByType(colls);
-    std::vector<edm::Handle<HORecHitCollection> >::iterator i;
-    for (i=colls.begin(); i!=colls.end(); i++) {
-      for (HORecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
-	//	std::cout << *j << std::endl;
-      }
+  std::vector<edm::Handle<HORecHitCollection> > colls;
+  evt.getManyByType(colls);
+  std::vector<edm::Handle<HORecHitCollection> >::iterator i;
+  for (i=colls.begin(); i!=colls.end(); i++) {
+    for (HORecHitCollection::const_iterator j=(*i)->begin(); j!=(*i)->end(); j++) {
+      //	std::cout << *j << std::endl;
     }
-  } catch (...) {
-    cout << "No HO RecHits." << endl;
   }
-
-
 
   // *********************************************************
   // --- CaloTower Selection
@@ -1030,8 +1015,7 @@ myFilter::filter(edm::Event& evt, edm::EventSetup const& es) {
   }
 
   if (result) {
-    std::cout << "<<<< Event Passed" 
-	      << std::endl;
+    edm::LogInfo ("summary")<< "<<<< Event Passed myFilter" ;
   }
   return result;
 
